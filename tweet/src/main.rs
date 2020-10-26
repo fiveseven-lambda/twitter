@@ -81,7 +81,7 @@ impl Client {
             map
         };
 
-        let url_with_parameters = format!("{}?{}", url, parameters.iter().map(|(key, value)|{ format!("{}={}", percent_encode(key), percent_encode(value)) }).collect::<Vec<String>>().join("&"));
+        let url_with_parameters = format!("{}?{}", url, equal_collect(parameters.iter().map(|(key, value)|{ (*key, *value) })).join("&"));
 
         let client = reqwest::Client::new();
         client.request(method, &url_with_parameters).headers(header_map).send().await
