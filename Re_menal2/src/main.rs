@@ -283,43 +283,48 @@ fn re_menal_word(text: &str) -> Vec<(bool, &str)> {
 fn re_menal_parse(text: &str) -> Option<(u32, u32)> {
 
     let words = re_menal_word(text);
-    {
-        let mut iter = words.iter();
 
-        while {
-            let mut it = iter.clone();
-            if let (Some((true, hour)), Some((false, ji)), Some((true, min)), Some((false, fun))) = (it.next(), it.next(), it.next(), it.next()) {
-                if ji == &"時" && fun == &"分" {
-                    if let (Ok(hour), Ok(min)) = (hour.parse(), min.parse()){
-                        return Some((hour, min));
-                    }
+    let mut vec = Vec::new();
+    let mut half = false;
+    let mut rev = false;
+
+    for c in words {
+        match c {
+            (true, num) => {
+                vec.push(num.parse().unwrap());
+            }
+            (false, word) => {
+                if word == "半" {
+                    half = true;
+                } else if word == "前" {
+                    rev = true;
                 }
             }
-            iter.next().is_some()
-        } {}
+        }
     }
-
-    {
-        let mut iter = words.iter();
-
-        while {
-            let mut it = iter.clone();
-            if let (Some((true, hour)), Some((false, ji)), Some((false, han))) = (it.next(), it.next(), it.next()) {
-                if ji == &"時" && han == &"半" {
-                    if let Ok(hour) = hour.parse() {
-                        return Some((hour, 30));
-                    }
-                }
-            }
-            iter.next().is_some()
-        } {}
+    if vec.len() > 1 {
+        if rev {
+            Some((vec[0] - 1, 60 - vec[1]))
+        } else {
+            Some((vec[0], vec[1]))
+        }
+    } else if vec.len() == 1 {
+        if half {
+            Some((vec[0], 30))
+        } else {
+            Some((vec[0], 0))
+        }
+    } else {
+        None
     }
-
-    None
 }
 
 #[test]
 fn re_menal_parse_test() {
-    assert_eq!(re_menal_parse("おはようございます！11時30分に起きました"), Some((11, 30)));
+    assert_eq!(re_menal_parse("おはようございます！10時10分に起きました"), Some((10, 10)));
     assert_eq!(re_menal_parse("おはようございます！11時半に起きました"), Some((11, 30)));
+    assert_eq!(re_menal_parse("おはようございます！11時に起きました"), Some((11, 0)));
+    assert_eq!(re_menal_parse("おはようございます！11時の10分後くらいに起きました"), Some((11, 10)));
+    assert_eq!(re_menal_parse("おはようございます！11時10分前に起きました"), Some((10, 50)));
+    assert_eq!(re_menal_parse("おはようございます！11:10に起きました"), Some((11, 10)));
 }
