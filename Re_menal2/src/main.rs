@@ -288,7 +288,7 @@ fn re_menal_parse(text: &str) -> Option<(u32, u32)> {
     let mut half = false;
     let mut rev = false;
 
-    for c in words {
+    for c in words.into_iter().rev() {
         match c {
             (true, num) => {
                 vec.push(num.parse().unwrap());
@@ -303,11 +303,16 @@ fn re_menal_parse(text: &str) -> Option<(u32, u32)> {
         }
     }
     if vec.len() > 1 {
-        if rev {
-            Some((vec[0] - 1, 60 - vec[1]))
-        } else {
-            Some((vec[0], vec[1]))
+        let mut ret = vec[1] * 60;
+        if half {
+            ret += 30;
         }
+        if rev {
+            ret -= vec[0];
+        } else {
+            ret += vec[0];
+        }
+        Some((ret / 60, ret % 60))
     } else if vec.len() == 1 {
         if half {
             Some((vec[0], 30))
@@ -321,10 +326,11 @@ fn re_menal_parse(text: &str) -> Option<(u32, u32)> {
 
 #[test]
 fn re_menal_parse_test() {
-    assert_eq!(re_menal_parse("おはようございます！10時10分に起きました"), Some((10, 10)));
+    assert_eq!(re_menal_parse("おはようございます！10時15分に起きました"), Some((10, 15)));
     assert_eq!(re_menal_parse("おはようございます！11時半に起きました"), Some((11, 30)));
     assert_eq!(re_menal_parse("おはようございます！11時に起きました"), Some((11, 0)));
     assert_eq!(re_menal_parse("おはようございます！11時の10分後くらいに起きました"), Some((11, 10)));
     assert_eq!(re_menal_parse("おはようございます！11時10分前に起きました"), Some((10, 50)));
     assert_eq!(re_menal_parse("おはようございます！11:10に起きました"), Some((11, 10)));
+    assert_eq!(re_menal_parse("おはようございます！8時におきようとしたのですが，9時10分に起きてしまいました"), Some((9, 10)));
 }
