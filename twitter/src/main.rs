@@ -29,7 +29,8 @@ impl Client {
         ) -> Result<String, Box<dyn std::error::Error>> {
             let mut s = String::new();
             reader.read_line(&mut s)?;
-            Ok(s.trim().to_owned())
+            s.pop();
+            Ok(s)
         }
         Ok(Client {
             api_key: read_line(&mut reader)?,
