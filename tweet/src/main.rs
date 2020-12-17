@@ -2,6 +2,8 @@
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match Client::from_config("config") {
         Ok(client) => {
+            let response = client.tweet("にゃーん").await?;
+            /*
             let mut parameters = std::collections::BTreeMap::new();
 
             // parameters.insert("status", "おはよう！");
@@ -9,6 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             // let response = client.send(reqwest::Method::POST, "https://api.twitter.com/1.1/statuses/update.json", &parameters).await?;
             let response = client.send(reqwest::Method::GET, "https://api.twitter.com/1.1/statuses/home_timeline.json", &parameters).await?;
+            // */
             let text = response.text().await?;
             println!("{}", text);
         }
@@ -72,6 +75,12 @@ impl Client {
         format!("OAuth {}", equal_collect(other_parameters.into_iter()).join(", "))
     }
 
+    async fn tweet(&self, status: &str) -> Result<reqwest::Response, reqwest::Error> {
+        let mut parameters = std::collections::BTreeMap::new();
+        parameters.insert("status", status);
+        self.send(reqwest::Method::POST, "https://api.twitter.com/1.1/statuses/update.json", &parameters).await
+    }
+
     async fn send(&self, method: reqwest::Method, url: &str, parameters: &std::collections::BTreeMap<&str, &str>) -> Result<reqwest::Response, reqwest::Error> {
         let header_map = {
             use reqwest::header::*;
@@ -81,7 +90,7 @@ impl Client {
             map
         };
 
-        let url_with_parameters = format!("{}?{}", url, equal_collect(parameters.iter().map(|(key, value)|{ (*key, *value) })).join("&"));
+        let url_with_parameters = format!("{}?{}", url, equal_collect(parameters.iter().map(|(key, value)| (*key, *value) )).join("&"));
 
         let client = reqwest::Client::new();
         client.request(method, &url_with_parameters).headers(header_map).send().await
